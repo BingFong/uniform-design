@@ -18,11 +18,50 @@ from numpy import genfromtxt
 #    uniform_table = table[:, list_columns]
 #    return uniform_table
 
+def cd2(udt, udt_combination, N, S):
+    """ CD2 """
+    
+    for i in range(udt_combination.shape[0]):
+        udt_cd2 = np.reshape(udt[:, udt_combination[i, 0]], (N,1))
+        for j in range(1, S):
+            udt_cd2 = np.append(udt_cd2, np.reshape(udt[:, udt_combination[i, j]], (N,1)), axis=1)
+    
+        with np.printoptions():
+            print("\nudt_cd2_{}".format(i))
+            print(udt_cd2)
+        
+        p1 = math.pow((13/12), S)
+        p2 = p3 = 0
+        f2 = f3 = 1
+
+        for i in range(N):
+            for j in range(S):
+                f2 *= (1 + 0.5*(abs(udt_cd2[i, j] - 0.5))
+                - 0.5*(math.pow(abs(udt_cd2[i, j] - 0.5), 2)))
+            p2 += f2
+            f2 = 1
+        p2 = 2/N*p2
+                    
+        for i in range(N):
+            for k in range(N):
+                for j in range(S):
+                    f3 *= (1 + 0.5*(abs(udt_cd2[i, j] - 0.5)) 
+                    + 0.5*(abs(udt_cd2[k, j] - 0.5)) 
+                    - 0.5*(abs(udt_cd2[i, j] - udt_cd2[k, j])))
+                p3 += f3
+                f3 = 1
+        p3 = 1/(N*N)*p3
+        
+        cd = math.pow(p1-p2+p3, 0.5)
+        print(cd)
+                
 def udt_combination():
     """ different combinations of UDT columns """
-    global N, S
+    global S
     
-    rows = int(math.factorial(N)/ (math.factorial(S) * math.factorial(N-S)))
+    udt_col = udt.shape[1]
+    
+    rows = int(math.factorial(udt_col)/ (math.factorial(S) * math.factorial(udt_col-S)))
     columns = np.zeros((rows, S), dtype=np.intp)
     col_list = list()
 
@@ -30,16 +69,16 @@ def udt_combination():
         col_list.append(i)
 
     col_count = 0
-    while col_list[S-1] < N: #while the last element smaller than N, meaning end of the loop
+    while col_list[S-1] < udt.shape[1]: #stop when combinations genarated
         columns[col_count] = col_list
         col_count += 1
-        print(col_list)
+        print('col_list', col_list)
 
         col_list[-1] += 1
 
-        if col_list[S-1] == N:
+        if col_list[S-1] == udt.shape[1]:
             for i in reversed(range(S-1)):
-                if col_list[i]+1 <= N-S+i:
+                if col_list[i]+1 <= udt.shape[1]-S+i:
                     col_list[i] += 1
                     while i < (S-1):
                         col_list[i+1] = col_list[i]+1
@@ -51,9 +90,9 @@ def udt_combination():
 def uniform_design_table(modulo_table):
     """ generate default and modulo table """
     global N
-    col = list() #record avaible columns
+    col = list() 
 
-    for i in range(N): #compute greatest common divisor of every column and N(experiment number)
+    for i in range(N): #record avaible columns
         if math.gcd(i, N) == 1:
             col.append(i)
 
@@ -66,8 +105,8 @@ def uniform_design_table(modulo_table):
     uni_table = uni_table.T
 
     with np.printoptions():
-        print("\nU({},{}):".format(N, len(col)))
-        print(uni_table)
+        print("U({},{}):\n".format(N, len(col)))
+        print(uni_table, '\n')
 
     return uni_table
 
@@ -75,7 +114,7 @@ def table():
     """ generate default and modulo table """
     global N
     default_table = np.zeros((N, N-1), dtype=np.intp) #default uniform design table
-    modulo_table = np.zeros((N, N-1), dtype=np.intp) #record columns of UDT that after modulo operation
+    modulo_table = np.zeros((N, N-1), dtype=np.intp) #record cols of UDT after modulo operation
     for i in range(N):
         for j in range(N-1):
             default_table[i, j] = (i+1) * (j+1)
@@ -94,12 +133,16 @@ def table():
     return default_table, modulo_table
 
 if __name__ == '__main__':
-    N = 9
-    S = 5
-    DEFAULT_TABLE, MODULO_TABLE = table()
-    UDT = uniform_design_table(MODULO_TABLE)
-    UDT_COMBINATION = udt_combination()
+    N = 5
+    S = 3
+    default_table, modulo_table = table()
+    udt = uniform_design_table(modulo_table)
+    udt_combination = udt_combination()
+    
+    cd2(udt, udt_combination, N, S)
 
+    
+            
 #    uniform_table = design(table)
 #    print("uniform design table:\n",uniform_table, '\n')
 
