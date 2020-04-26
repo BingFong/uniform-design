@@ -11,6 +11,7 @@ from os.path import join
 
 import numpy as np
 from numpy import genfromtxt
+import cmath
 
 #def design(table):
 #    list_columns = [int(x)-1 for x in input('column:').split()]
@@ -18,13 +19,14 @@ from numpy import genfromtxt
 #    uniform_table = table[:, list_columns]
 #    return uniform_table
 
-def cd2(udt, udt_combination, N, S):
+def cd2_evaluate(udt, udt_combination, N, S):
     """ CD2 """
-    
+    record = np.ndarray((udt_combination.shape[0],), dtype=np.complex_)
+    print(record.shape)
     for i in range(udt_combination.shape[0]):
-        udt_cd2 = np.reshape(udt[:, udt_combination[i, 0]], (N,1))
+        udt_cd2 = np.reshape(udt[:, udt_combination[i, 0]], (N, 1))
         for j in range(1, S):
-            udt_cd2 = np.append(udt_cd2, np.reshape(udt[:, udt_combination[i, j]], (N,1)), axis=1)
+            udt_cd2 = np.append(udt_cd2, np.reshape(udt[:, udt_combination[i, j]], (N, 1)), axis=1)
     
         with np.printoptions():
             print("\nudt_cd2_{}".format(i))
@@ -34,26 +36,31 @@ def cd2(udt, udt_combination, N, S):
         p2 = p3 = 0
         f2 = f3 = 1
 
-        for i in range(N):
-            for j in range(S):
-                f2 *= (1 + 0.5*(abs(udt_cd2[i, j] - 0.5))
-                - 0.5*(math.pow(abs(udt_cd2[i, j] - 0.5), 2)))
+        for m in range(N):
+            for n in range(S):
+                f2 *= (1 + 0.5*(abs(udt_cd2[m, n] - 0.5)) - 0.5*(math.pow(abs(udt_cd2[m, n] - 0.5), 2)))
             p2 += f2
             f2 = 1
         p2 = 2/N*p2
                     
-        for i in range(N):
+        for m in range(N):
             for k in range(N):
-                for j in range(S):
-                    f3 *= (1 + 0.5*(abs(udt_cd2[i, j] - 0.5)) 
-                    + 0.5*(abs(udt_cd2[k, j] - 0.5)) 
-                    - 0.5*(abs(udt_cd2[i, j] - udt_cd2[k, j])))
+                for n in range(S):
+                    f3 *= (1 + 0.5*(abs(udt_cd2[m, n] - 0.5)) + 0.5*(abs(udt_cd2[k, n] - 0.5)) - 0.5*(abs(udt_cd2[m, n] - udt_cd2[k, n])))
                 p3 += f3
                 f3 = 1
         p3 = 1/(N*N)*p3
         
-        cd = math.pow(p1-p2+p3, 0.5)
-        print(cd)
+        cd2 = cmath.sqrt(p1-p2+p3)
+        print(cd2)
+        record[i] = cd2
+
+    print('min cd2:', min(record))
+    with np.printoptions():
+#            print("\nudt_cd2_{}".format(np.argmin(record)))
+            print(udt_combination[np.argmin(record)])
+    
+    
                 
 def udt_combination():
     """ different combinations of UDT columns """
@@ -61,7 +68,7 @@ def udt_combination():
     
     udt_col = udt.shape[1]
     
-    rows = int(math.factorial(udt_col)/ (math.factorial(S) * math.factorial(udt_col-S)))
+    rows = int(math.factorial(udt_col) / (math.factorial(S) * math.factorial(udt_col-S)))
     columns = np.zeros((rows, S), dtype=np.intp)
     col_list = list()
 
@@ -133,13 +140,13 @@ def table():
     return default_table, modulo_table
 
 if __name__ == '__main__':
-    N = 5
-    S = 3
+    N = 7
+    S = 4
     default_table, modulo_table = table()
     udt = uniform_design_table(modulo_table)
     udt_combination = udt_combination()
     
-    cd2(udt, udt_combination, N, S)
+    cd2_evaluate(udt, udt_combination, N, S)
 
     
             
