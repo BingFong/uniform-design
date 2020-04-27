@@ -60,7 +60,6 @@ def cd2_evaluate(udt, udt_combination, N, S):
 #            print("\nudt_cd2_{}".format(np.argmin(record)))
             print(udt_combination[np.argmin(record)])
     
-    
                 
 def udt_combination():
     """ different combinations of UDT columns """
@@ -68,17 +67,14 @@ def udt_combination():
     
     udt_col = udt.shape[1]
     
-    rows = int(math.factorial(udt_col) / (math.factorial(S) * math.factorial(udt_col-S)))
-    columns = np.zeros((rows, S), dtype=np.intp)
-    col_list = list()
+    max_rows = int(math.factorial(udt_col) / (math.factorial(S) * math.factorial(udt_col-S)))
+    columns = np.zeros((max_rows, S), dtype=np.intp)
+    col_list = list(range(S))
 
-    for i in range(S):
-        col_list.append(i)
-
-    col_count = 0
+    count = 0
     while col_list[S-1] < udt.shape[1]: #stop when combinations genarated
-        columns[col_count] = col_list
-        col_count += 1
+        columns[count] = col_list
+        count += 1
         print('col_list', col_list)
 
         col_list[-1] += 1
@@ -95,27 +91,21 @@ def udt_combination():
     
 
 def uniform_design_table(modulo_table):
-    """ generate default and modulo table """
+    """ generate UDT """
     global N
     col = list() 
 
-    for i in range(N): #record avaible columns
+    for i in range(N):
         if math.gcd(i, N) == 1:
-            col.append(i)
-
-    for i in col:
-        if i == 1:
-            uni_table = np.array([modulo_table[:, 0]])
-        else:
-            uni_table = np.concatenate((uni_table, np.array([modulo_table[:, i-1]])), axis=0)
-
-    uni_table = uni_table.T
+            col.append(i-1)
+    uni_table = modulo_table[:, col]
 
     with np.printoptions():
-        print("U({},{}):\n".format(N, len(col)))
+        print("\nU({},{}) UDT:".format(N, len(col)))
         print(uni_table, '\n')
 
     return uni_table
+
 
 def table():
     """ generate default and modulo table """
